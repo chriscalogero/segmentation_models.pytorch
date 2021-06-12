@@ -1,5 +1,5 @@
 import torch
-
+import torch.nn.functional as F
 
 def _take_channels(*xs, ignore_channels=None):
     if ignore_channels is None:
@@ -38,6 +38,30 @@ def iou(pr, gt, eps=1e-7, threshold=None, ignore_channels=None):
 
 jaccard = iou
 
+def mIOU(label, pred, num_classes=19):
+    pred = F.softmax(pred, dim=1)              
+    pred = torch.argmax(pred, dim=1).squeeze(1)
+    iou_list = list()
+    present_iou_list = list()
+
+    pred = pred.view(-1)
+    label = label.view(-1)
+    # Note: Following for loop goes from 0 to (num_classes-1)
+    # and ignore_index is num_classes, thus ignore_index is
+    # not considered in computation of IoU.
+    for sem_class in range(num_classes):
+        pred_inds = (pred == sem_class)
+        target_inds = (label == sem_class)
+        if target_inds.long().sum().item() == 0:
+            iou_now = float('nan')
+        else: 
+            intersection_now = (pred_inds[target_inds]).long().sum().item()
+            union_now = pred_inds.long().sum().item() + target_inds.long().sum().item() - intersection_now
+            iou_now = float(intersection_now) / float(union_now)
+            present_iou_list.append(iou_now)
+        iou_list.append(iou_now)
+    present_iou_list=torch.tensor(present_iou_list)
+    return torch.mean(present_iou_list)
 
 def f_score(pr, gt, beta=1, eps=1e-7, threshold=None, ignore_channels=None):
     """Calculate F-score between ground truth and prediction

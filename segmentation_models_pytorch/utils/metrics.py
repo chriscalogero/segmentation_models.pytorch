@@ -6,22 +6,12 @@ from ..base.modules import Activation
 class IoU(base.Metric):
     __name__ = 'iou_score'
 
-    def __init__(self, eps=1e-7, threshold=0.5, activation=None, ignore_channels=None, **kwargs):
+    def __init__(self,num_classes=19, **kwargs):
         super().__init__(**kwargs)
-        self.eps = eps
-        self.threshold = threshold
-        self.activation = Activation(activation)
-        self.ignore_channels = ignore_channels
-
+        self.num_classes=num_classes
     def forward(self, y_pr, y_gt):
-        y_pr = self.activation(y_pr)
-        return F.iou(
-            y_pr, y_gt,
-            eps=self.eps,
-            threshold=self.threshold,
-            ignore_channels=self.ignore_channels,
+        return F.mIOU(y_gt,y_pr,num_classes=self.num_classes
         )
-
 
 class Fscore(base.Metric):
 
