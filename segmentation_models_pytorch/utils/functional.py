@@ -88,7 +88,7 @@ def f_score(pr, gt, beta=1, eps=1e-7, threshold=None, ignore_channels=None):
     return score
 
 
-def accuracy(pr, gt, threshold=0.5, ignore_channels=None):
+def accuracy(pr, gt):
     """Calculate accuracy score between ground truth and prediction
     Args:
         pr (torch.Tensor): predicted tensor
@@ -98,9 +98,8 @@ def accuracy(pr, gt, threshold=0.5, ignore_channels=None):
     Returns:
         float: precision score
     """
-    pr = _threshold(pr, threshold=threshold)
-    pr, gt = _take_channels(pr, gt, ignore_channels=ignore_channels)
-
+    pr=F.log_softmax(pr,dim=1)
+    pr=torch.argmax(pr,dim=1)
     tp = torch.sum(gt == pr, dtype=pr.dtype)
     score = tp / gt.view(-1).shape[0]
     return score
